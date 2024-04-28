@@ -2,11 +2,12 @@ import express from "express";
 import 'dotenv/config';
 import connectionDB from "./config.js";
 import UserRoute from "./routes/userRoute.js";
+import { faker } from '@faker-js/faker';
 
 process.on('uncaughtException', (e) => {
     console.log('Error',e);
-  });
-
+});
+                                                                                                                          
   
 const app = express();
 
