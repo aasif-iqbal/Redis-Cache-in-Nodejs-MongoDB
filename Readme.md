@@ -265,6 +265,9 @@ const getQuiz: RequestHandler = async (req, res, next) => {
 > [!NOTE] 
 > Note: Make Sure, After every Operations(such as Create, update, delete) We need to ERASE the cache-memory, So that we get updated cache value.
 
+## MongoDB - Compass
+![MongoDB](/screenshots/oneMillion.png)
+
 ## Performance - before and after using Redis
 A. Without using Redis Cache
 ![Redis](/screenshots/before_redis.png)
