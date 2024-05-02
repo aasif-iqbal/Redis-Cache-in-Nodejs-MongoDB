@@ -5,13 +5,7 @@ import UserRoute from "./routes/userRoute.js";
 import { faker } from '@faker-js/faker';
 import * as redis from "redis";
 
-process.on('uncaughtException', (e) => {
-    console.log('Error',e);
-});
-
-
 let redisClient;
-
 
 const app = express();
 

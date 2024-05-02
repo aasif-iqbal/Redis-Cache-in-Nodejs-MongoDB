@@ -206,7 +206,7 @@ npm install @types/redis
 1. Create Connection
 
 ```js
-import * as redis from "redis";
+import redis from "redis";
 
 let redisClient;
 
@@ -221,45 +221,37 @@ let redisClient;
 2. How to set and get data using redis cache in Nodejs App
 
 ```js
-const _createRedisClient = async () => {
-  
-  const client = await redis.createClient();
-  
-  client.on('error', (err) => {
-      console.error('Redis connection error:', err);
-  });
-  // Additional initialization or setup logic can go here
-  return client;
-}
-
-const getQuiz: RequestHandler = async (req, res, next) => {
- 
- let quiz;
- 
- try { 
+router.get("/", async (request, response) => {
+  try {
     const redisClient = await _createRedisClient();
-        
-        await redisClient.connect();
-        
-        //get data from cache-memory
-        let redisCache = await redisClient.get(JSON.stringify('my_key'));            
+    await redisClient.connect();
+    //get data from cache-memory
+    let redisCache = await redisClient.get(JSON.stringify("my_key"));
     
-        if(redisCache !== null){
-            // fetch from redis-cache
-           return quiz = JSON.parse(redisCache);            
-        } else {        
-            // if cache is null(missing) - Fetch from database
-            quiz = await Quiz.find({});
-            
-            // set quiz data in redis cache with unique key
-            await redisClient.set(JSON.stringify('my_key'), JSON.stringify(quiz));      
+    // console.log(redisCache);
 
-            return quiz;
-        }        
-    } catch(err){
-        next(error);
-    } 
-}
+    if (redisCache !== null) {
+      // fetch from redis-cache
+      const user_data = JSON.parse(redisCache);
+      console.log('from cache');
+      return response.json(user_data);
+    } else {
+      // if cache is null(missing) - Fetch from database
+
+      const user_data = await UserModel.find({});
+
+      // set quiz data in redis cache with unique key
+      await redisClient.set(
+        JSON.stringify("my_key"),
+        JSON.stringify(user_data)
+      );
+      console.log('from database');
+      return response.json(user_data);
+    }
+  } catch (error) {
+    console.log(error);
+  }
+});
 ```
 
 > [!NOTE] 
