@@ -186,7 +186,7 @@ OK
 ```
 
 > [!NOTE] 
-> Note: We Don't Need Redis cache to be installed in our local machine to work with nodejs app. In nodejs app, we simply use npm install redis, to install and use it in our application.
+> Note: We Need Redis cache to be installed in our local machine to work with nodejs app.
 
 ## Installing Redis Cache in Our Nodejs App
 
@@ -208,36 +208,35 @@ npm install @types/redis
 ```js
 import redis from "redis";
 
-let redisClient;
+let redisConnection = async function(){
+    let redisClient = await redis.createClient();
+  
+    await redisClient.on("error", (error) => console.error(`Error : ${error}`));
+  
+    await redisClient.connect();    
+    
+    return redisClient;
+}
 
-(async () => {
-  redisClient = redis.createClient();
-
-  redisClient.on("error", (error) => console.error(`Error : ${error}`));
-
-  await redisClient.connect();
-})();
+export default redisConnection;
 ```
 2. How to set and get data using redis cache in Nodejs App
 
 ```js
 router.get("/", async (request, response) => {
   try {
-    const redisClient = await _createRedisClient();
-    await redisClient.connect();
+    let redisClient = await redisConnection();
     //get data from cache-memory
     let redisCache = await redisClient.get(JSON.stringify("my_key"));
-    
-    // console.log(redisCache);
 
     if (redisCache !== null) {
       // fetch from redis-cache
       const user_data = JSON.parse(redisCache);
-      console.log('from cache');
+      
+      //From redis cache
       return response.json(user_data);
     } else {
       // if cache is null(missing) - Fetch from database
-
       const user_data = await UserModel.find({});
 
       // set quiz data in redis cache with unique key
@@ -245,20 +244,17 @@ router.get("/", async (request, response) => {
         JSON.stringify("my_key"),
         JSON.stringify(user_data)
       );
-      console.log('from database');
-      return response.json(user_data);
+      //From database
+      return response.status(200).json({'msg':user_data});
     }
-  } catch (error) {
-    console.log(error);
+  } catch (error) {    
+    response.status(501).json({'msg':err})
   }
 });
 ```
 
 > [!NOTE] 
 > Note: Make Sure, After every Operations(such as Create, update, delete) We need to ERASE the cache-memory, So that we get updated cache value.
-
-## MongoDB - Compass
-![MongoDB](/screenshots/oneMillion.png)
 
 ## Performance - before and after using Redis
 A. Without using Redis Cache
