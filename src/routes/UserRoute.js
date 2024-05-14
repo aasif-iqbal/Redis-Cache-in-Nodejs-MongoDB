@@ -13,7 +13,8 @@ router.get("/", async (request, response) => {
     if (redisCache !== null) {
       // fetch from redis-cache
       const user_data = JSON.parse(redisCache);
-      console.log("from redis cache");
+
+      //From redis cache
       return response.json(user_data);
     } else {
       // if cache is null(missing) - Fetch from database
@@ -24,7 +25,8 @@ router.get("/", async (request, response) => {
         JSON.stringify("my_key"),
         JSON.stringify(user_data)
       );
-      console.log("from database");
+      
+      //From database
       return response.status(200).json({'msg':user_data});
     }
   } catch (error) {    

@@ -209,12 +209,11 @@ npm install @types/redis
 import redis from "redis";
 
 let redisConnection = async function(){
-    let redisClient = redis.createClient();
+    let redisClient = await redis.createClient();
   
-    redisClient.on("error", (error) => console.error(`Error : ${error}`));
+    await redisClient.on("error", (error) => console.error(`Error : ${error}`));
   
-    await redisClient.connect();
-    console.log('Redis connected..');
+    await redisClient.connect();    
     
     return redisClient;
 }
@@ -233,7 +232,8 @@ router.get("/", async (request, response) => {
     if (redisCache !== null) {
       // fetch from redis-cache
       const user_data = JSON.parse(redisCache);
-      console.log("from redis cache");
+      
+      //From redis cache
       return response.json(user_data);
     } else {
       // if cache is null(missing) - Fetch from database
@@ -244,7 +244,7 @@ router.get("/", async (request, response) => {
         JSON.stringify("my_key"),
         JSON.stringify(user_data)
       );
-      console.log("from database");
+      //From database
       return response.status(200).json({'msg':user_data});
     }
   } catch (error) {    
