@@ -1,41 +1,22 @@
 import express from "express";
 import UserModel from "../models/user.js";
 import { faker } from "@faker-js/faker";
-import * as redis from "redis";
-
+import redisConnection from "../helper/redis.js";
 const router = express.Router();
-
-router.get("/test", async (request, response) => {
-  response.send("okk");
-});
-
-const _createRedisClient = async () => {
-  const client = await redis.createClient();
-
-  client.on("error", (err) => {
-    console.error("Redis connection error:", err);
-  });
-
-  return client;
-};
 
 router.get("/", async (request, response) => {
   try {
-    const redisClient = await _createRedisClient();
-    await redisClient.connect();
+    let redisClient = await redisConnection();
     //get data from cache-memory
     let redisCache = await redisClient.get(JSON.stringify("my_key"));
-    
-    // console.log(redisCache);
 
     if (redisCache !== null) {
       // fetch from redis-cache
       const user_data = JSON.parse(redisCache);
-      console.log('from cache');
+      console.log("from redis cache");
       return response.json(user_data);
     } else {
       // if cache is null(missing) - Fetch from database
-
       const user_data = await UserModel.find({});
 
       // set quiz data in redis cache with unique key
@@ -43,11 +24,11 @@ router.get("/", async (request, response) => {
         JSON.stringify("my_key"),
         JSON.stringify(user_data)
       );
-      console.log('from database');
-      return response.json(user_data);
+      console.log("from database");
+      return response.status(200).json({'msg':user_data});
     }
-  } catch (error) {
-    console.log(error);
+  } catch (error) {    
+    response.status(501).json({'msg':err})
   }
 });
 
@@ -65,9 +46,10 @@ router.post("/register", async (request, response) => {
     }));
 
     await UserModel.insertMany(fakeUserRecords);
-    console.log("data inserted..");
-  } catch (err) {
-    console.log(err);
+    
+    return response.status(201).json({'msg':'data inserted successfully'})
+  } catch (err) {    
+    return response.status(501).json({'msg':err});
   }
 });
 

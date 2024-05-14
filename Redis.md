@@ -186,7 +186,7 @@ OK
 ```
 
 > [!NOTE] 
-> Note: We Don't Need Redis cache to be installed in our local machine to work with nodejs app. In nodejs app, we simply use npm install redis, to install and use it in our application.
+> Note: We Need Redis cache to be installed in our local machine to work with nodejs app.
 
 ## Installing Redis Cache in Our Nodejs App
 
@@ -206,60 +206,51 @@ npm install @types/redis
 1. Create Connection
 
 ```js
-import * as redis from "redis";
+import redis from "redis";
 
-let redisClient;
+let redisConnection = async function(){
+    let redisClient = redis.createClient();
+  
+    redisClient.on("error", (error) => console.error(`Error : ${error}`));
+  
+    await redisClient.connect();
+    console.log('Redis connected..');
+    
+    return redisClient;
+}
 
-(async () => {
-  redisClient = redis.createClient();
-
-  redisClient.on("error", (error) => console.error(`Error : ${error}`));
-
-  await redisClient.connect();
-})();
+export default redisConnection;
 ```
 2. How to set and get data using redis cache in Nodejs App
 
 ```js
-const _createRedisClient = async () => {
-  
-  const client = await redis.createClient();
-  
-  client.on('error', (err) => {
-      console.error('Redis connection error:', err);
-  });
-  // Additional initialization or setup logic can go here
-  return client;
-}
+router.get("/", async (request, response) => {
+  try {
+    let redisClient = await redisConnection();
+    //get data from cache-memory
+    let redisCache = await redisClient.get(JSON.stringify("my_key"));
 
-const getQuiz: RequestHandler = async (req, res, next) => {
- 
- let quiz;
- 
- try { 
-    const redisClient = await _createRedisClient();
-        
-        await redisClient.connect();
-        
-        //get data from cache-memory
-        let redisCache = await redisClient.get(JSON.stringify('my_key'));            
-    
-        if(redisCache !== null){
-            // fetch from redis-cache
-           return quiz = JSON.parse(redisCache);            
-        } else {        
-            // if cache is null(missing) - Fetch from database
-            quiz = await Quiz.find({});
-            
-            // set quiz data in redis cache with unique key
-            await redisClient.set(JSON.stringify('my_key'), JSON.stringify(quiz));      
+    if (redisCache !== null) {
+      // fetch from redis-cache
+      const user_data = JSON.parse(redisCache);
+      console.log("from redis cache");
+      return response.json(user_data);
+    } else {
+      // if cache is null(missing) - Fetch from database
+      const user_data = await UserModel.find({});
 
-            return quiz;
-        }        
-    } catch(err){
-        next(error);
-    } 
-}
+      // set quiz data in redis cache with unique key
+      await redisClient.set(
+        JSON.stringify("my_key"),
+        JSON.stringify(user_data)
+      );
+      console.log("from database");
+      return response.status(200).json({'msg':user_data});
+    }
+  } catch (error) {    
+    response.status(501).json({'msg':err})
+  }
+});
 ```
 
 > [!NOTE] 
